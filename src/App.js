@@ -18,7 +18,7 @@ function App() {
   const [query, setQuery] = useState('')
   const [citiesSearch, setCitiesSearch] = useState([]);
 
-  let array = [
+  let threeDayForecast = [
     {
       day: 'Today',
       maxTemp: Math.round(weatherData.forecast.forecastday[0]?.day?.maxtemp_c),
@@ -33,8 +33,9 @@ function App() {
       day: new Date(weatherData.forecast.forecastday[2]?.date_epoch * 1000).toLocaleTimeString('en-us', { weekday: "long" }).split(' ')[0],
       maxTemp: Math.round(weatherData.forecast.forecastday[2]?.day?.maxtemp_c),
       lowTemp: Math.round(weatherData.forecast.forecastday[2]?.day?.mintemp_c),
-    }, 
+    },
   ];
+
 
   let weatherStats = [
     {
@@ -75,24 +76,14 @@ function App() {
     },
   ];
 
-  function getWeatherDescription(weather) {
-    let item = weatherIcons.find((item) => item.weather === weather);
-    return item ? item.weather : null;
-    // return item.weather;
-  }
-
-  function getWeatherIcon(weather = []) {
-    // let item = weatherIcons.find((item) => item.weather === weather);
-    let item = weatherIcons.find((item) => weather.includes(item.weather.toLowerCase()));
-    return item ? <item.icon className="w-7 h-7 text-blue-500 mr-2" /> : null;
-  }
 
   useEffect(() => {
     fetchWeatherData();
   }, [city]);
 
+
+  // Used for the search bar to fetch cities based on the query from search bar.
   useEffect(() => {
-    console.log("searched city");
     // debounce to prevent spamming API
     const getData = setTimeout(() => {
       searchCities();
@@ -101,6 +92,24 @@ function App() {
     return () => clearTimeout(getData)
   }, [query]);
 
+
+  /**
+   * Provides the corresponding icon for the weather condition.
+   * 
+   * @param {String} weather Weather condition that needs to be matched with the weatherIcons array and return the corresponding icon.
+   * @returns {JSX.Element} Returns the corresponding icon from the weatherIcons array. If no match is found, it returns null.
+   */
+  function getWeatherIcon(weather) {
+    if (weather) {
+      let item = weatherIcons.find((item) => item.weather.toLowerCase() === weather.toLowerCase().trim()); // Trim and lowercase to make sure it matches. API sometimes messes it up (Ex. "partly Cloudy " instead of "Partly cloudy")
+      return item ? <item.icon className="w-7 h-7 text-blue-500 mr-2" /> : null;
+    }
+  }
+
+
+  /**
+   * Searches for cities based on the query and sets the 'citiesSearch' state with the results.
+   */
   async function searchCities() {
     try {
       const response = await fetch(`https://api.weatherapi.com/v1/search.json?key=${process.env.REACT_APP_WEATHERKEY}&q=${query}`);
@@ -116,6 +125,10 @@ function App() {
     }
   }
 
+
+  /**
+   * Fetches the weather data for the selected city and sets the 'weatherData' state with the results.
+   */
   async function fetchWeatherData() {
     try {
       // Used for loading animation
@@ -141,10 +154,18 @@ function App() {
     }
   };
 
+
+  /**
+   * Used to combine classNames together.
+   * @param  {...any} classes Classes to be combined together.
+   * @returns {String} Returns a string of classNames combined together.
+   */
   function classNames(...classes) {
     return classes.filter(Boolean).join(' ')
   }
 
+
+  // Filter cities based on the query.
   const filteredCities =
     query === ''
       ? citiesSearch
@@ -194,8 +215,8 @@ function App() {
                     <Combobox.Input
                       placeholder="Search for city"
                       className="bg-gray-800 text-gray-100 inline-flex focus:ring-0 focus:ring-offset-0 outline-none"
-                      onChange={(event) => setQuery(event.target.value)} 
-                      // displayValue={(filteredCity) => filteredCity?.name}
+                      onChange={(event) => setQuery(event.target.value)}
+                    // displayValue={(filteredCity) => filteredCity?.name}
                     />
                   </div>
 
@@ -317,11 +338,11 @@ function App() {
           <span className="text-gray-100 text-xl font-medium">3-Day Forecast</span>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-2 mb-4">
-            {array.map((item) => (
+            {threeDayForecast.map((item, index) => (
               <div className="bg-gray-900 border border-gray-800 shadow-sm rounded-md p-4 hover:bg-gray-800 cursor-pointer">
 
                 <div className="flex items-center">
-                  <FiSun className="w-7 h-7 text-blue-500 mr-2" />
+                  {getWeatherIcon(weatherData.forecast?.forecastday[index]?.day?.condition?.text)}
                   <p className="text-gray-100 text-lg font-medium">{item.day}</p>
                   <div className="flex ml-auto">
                     <p className="text-gray-100 text-lg mr-1">{item.maxTemp}°</p>
