@@ -2,18 +2,21 @@ import { useEffect, useState } from 'react';
 import { HiSearch, HiRefresh } from "react-icons/hi";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Area, AreaChart } from 'recharts';
 import { FiWind, FiDroplet, FiThermometer, FiEye, FiSun } from "react-icons/fi";
-import { RiWaterPercentLine, RiDashboard3Line, RiSunLine, RiDrizzleLine, RiThunderstormsLine, RiCloudLine, RiRainyLine, RiSnowyLine } from "react-icons/ri";
+import { RiWaterPercentLine, RiDashboard3Line } from "react-icons/ri";
+import { Combobox } from '@headlessui/react'
+import weatherIcons from './JSON/weatherIcons';
 import './App.css';
 
 function App() {
-  const [city, setCity] = useState("Winnipeg   ");
+  const [city, setCity] = useState({ name: 'Winnipeg' });
   const [loading, setLoading] = useState(false);
   const [weatherData, setWeatherData] = useState({
     current: "",
     forecast: { forecastday: [""] },
   });
 
-  let days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const [query, setQuery] = useState('')
+  const [citiesSearch, setCitiesSearch] = useState([]);
 
   let array = [
     {
@@ -22,77 +25,15 @@ function App() {
       lowTemp: Math.round(weatherData.forecast.forecastday[0]?.day?.mintemp_c),
     },
     {
-      day: days[new Date(weatherData.forecast.forecastday[1]?.date_epoch * 1000).getDay()],
+      day: new Date(weatherData.forecast.forecastday[1]?.date_epoch * 1000).toLocaleTimeString('en-us', { weekday: "long" }).split(' ')[0],
       maxTemp: Math.round(weatherData.forecast.forecastday[1]?.day?.maxtemp_c),
       lowTemp: Math.round(weatherData.forecast.forecastday[1]?.day?.mintemp_c),
     },
     {
-      day: days[new Date(weatherData.forecast.forecastday[2]?.date_epoch * 1000).getDay()],
+      day: new Date(weatherData.forecast.forecastday[2]?.date_epoch * 1000).toLocaleTimeString('en-us', { weekday: "long" }).split(' ')[0],
       maxTemp: Math.round(weatherData.forecast.forecastday[2]?.day?.maxtemp_c),
       lowTemp: Math.round(weatherData.forecast.forecastday[2]?.day?.mintemp_c),
-    },
-    /* {
-      day: 'Thursday',
-      temp: '20',
-    },
-    {
-      day: 'Friday',
-      temp: '20',
-    },
-    {
-      day: 'Saturday',
-      temp: '20',
-    },
-    {
-      day: 'Sunday',
-      temp: '20',
-    }, */
-  ];
-
-
-  let data = [
-    {
-      "name": "Page A",
-      "uv": 590,
-      "pv": 800,
-      "amt": 1400
-    },
-    {
-      "name": "Page A",
-      "uv": 590,
-      "pv": 800,
-      "amt": 1400
-    },
-    {
-      "name": "Page B",
-      "uv": 868,
-      "pv": 967,
-      "amt": 1506
-    },
-    {
-      "name": "Page C",
-      "uv": 1397,
-      "pv": 1098,
-      "amt": 989
-    },
-    {
-      "name": "Page D",
-      "uv": 1480,
-      "pv": 1200,
-      "amt": 1228
-    },
-    {
-      "name": "Page E",
-      "uv": 1520,
-      "pv": 1108,
-      "amt": 1100
-    },
-    {
-      "name": "Page F",
-      "uv": 1400,
-      "pv": 680,
-      "amt": 1700
-    }
+    }, 
   ];
 
   let weatherStats = [
@@ -134,55 +75,56 @@ function App() {
     },
   ];
 
-  const weatherIcons = [
-    {
-      weather: 'Clear',
-      icon: RiSunLine,
-    },
-    {
-      weather: 'Thunderstorm',
-      icon: RiThunderstormsLine,
-    },
-    {
-      weather: 'Clouds',
-      icon: RiCloudLine,
-    },
-    {
-      weather: 'Snow',
-      icon: RiSnowyLine,
-    },
-    {
-      weather: 'Rain',
-      icon: RiRainyLine,
-    },
-    {
-      weather: 'Drizzle',
-      icon: RiDrizzleLine,
-    },
-  ];
-
   function getWeatherDescription(weather) {
     let item = weatherIcons.find((item) => item.weather === weather);
     return item ? item.weather : null;
     // return item.weather;
   }
 
-  function getWeatherIcon(weather) {
-    let item = weatherIcons.find((item) => item.weather === weather);
-    return item ? <item.icon className="w-6 h-6 text-blue-500 mr-2" /> : null;
+  function getWeatherIcon(weather = []) {
+    // let item = weatherIcons.find((item) => item.weather === weather);
+    let item = weatherIcons.find((item) => weather.includes(item.weather.toLowerCase()));
+    return item ? <item.icon className="w-7 h-7 text-blue-500 mr-2" /> : null;
   }
 
   useEffect(() => {
     fetchWeatherData();
-  }, []);
+  }, [city]);
 
-  const fetchWeatherData = async () => {
+  useEffect(() => {
+    console.log("searched city");
+    // debounce to prevent spamming API
+    const getData = setTimeout(() => {
+      searchCities();
+    }, 200)
+
+    return () => clearTimeout(getData)
+  }, [query]);
+
+  async function searchCities() {
+    try {
+      const response = await fetch(`https://api.weatherapi.com/v1/search.json?key=${process.env.REACT_APP_WEATHERKEY}&q=${query}`);
+      if (response.ok) {
+        const data = await response.json();
+        console.log(data);
+        setCitiesSearch(data);
+      } else {
+        throw new Error('Unable to fetch weather data');
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  async function fetchWeatherData() {
     try {
       // Used for loading animation
       setLoading(true);
 
+      let cityName = city.name;
+
       // const response = await fetch(`https://api.weatherapi.com/v1/current.json?key=${process.env.REACT_APP_WEATHERKEY}&q=Winnipeg&days=7&aqi=no&alerts=no`);
-      const response = await fetch(`https://api.weatherapi.com/v1/forecast.json?key=${process.env.REACT_APP_WEATHERKEY}&q=${city}&days=7&aqi=no&alerts=no`);
+      const response = await fetch(`https://api.weatherapi.com/v1/forecast.json?key=${process.env.REACT_APP_WEATHERKEY}&q=${cityName}&days=7&aqi=no&alerts=no`);
       if (response.ok) {
         const data = await response.json();
         setWeatherData(data);
@@ -199,8 +141,17 @@ function App() {
     }
   };
 
-  console.log(weatherData);
-  console.log(process.env.REACT_APP_WEATHERKEY)
+  function classNames(...classes) {
+    return classes.filter(Boolean).join(' ')
+  }
+
+  const filteredCities =
+    query === ''
+      ? citiesSearch
+      : citiesSearch.filter((person) => {
+        return person.name.toLowerCase().includes(query.toLowerCase())
+      })
+
 
   return (
     <main className="min-h-screen bg-gray-950 w-full absolute">
@@ -234,22 +185,72 @@ function App() {
                 <span className="sr-only">Refresh</span>
                 <HiRefresh onClick={() => fetchWeatherData()} className={`w-5 h-5 text-gray-400 group-hover:text-gray-300 ${loading ? "animate-reverse-spin" : ""}`} />
               </button>
-              <div className="inline-flex items-center bg-gray-800 py-2 px-4 rounded-full shadow-sm">
-                <HiSearch className="w-5 h-5 mr-2 text-gray-400" />
+              {/* <div className="inline-flex items-center bg-gray-800 py-2 px-4 rounded-full shadow-sm"> */}
+              {/* <HiSearch className="w-5 h-5 mr-2 text-gray-400" />
                 <label className="sr-only" htmlFor="citySearch">City Search</label>
                 <input
                   id="citySearch"
                   type="text"
                   placeholder="Search for city"
                   className="bg-gray-800 text-gray-100 inline-flex focus:ring-0 focus:ring-offset-0 outline-none"
-                />
-              </div>
+                /> */}
+              <Combobox as="div" value={city} onChange={setCity}>
+                <div className="relative  items-center bg-gray-800 pt-2 pb-1 px-4 rounded-full shadow-sm">
+                  <div className="relative items-center inline-flex">
+
+                    <HiSearch className="w-5 h-5 mr-2 text-gray-400" />
+                    <Combobox.Label className="sr-only">City Search</Combobox.Label>
+                    <Combobox.Input
+                      placeholder="Search for city"
+                      className="bg-gray-800 text-gray-100 inline-flex focus:ring-0 focus:ring-offset-0 outline-none"
+                      onChange={(event) => setQuery(event.target.value)} 
+                    // displayValue={(filteredCity) => filteredCity?.name}
+                    />
+                  </div>
+
+
+                  {filteredCities.length > 0 && (
+                    <Combobox.Options className="absolute z-10 mt-1.5 max-h-60 w-full overflow-auto rounded-md bg-gray-800 py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+                      {filteredCities.map((filteredCity) => (
+                        <Combobox.Option
+                          key={filteredCity.id}
+                          value={filteredCity}
+                          className={({ active }) =>
+                            classNames(
+                              'relative cursor-pointer select-none py-2 pl-3 pr-9',
+                              active ? 'bg-blue-600 text-white' : 'text-gray-400'
+                            )
+                          }
+                        >
+                          {({ active, selected }) => (
+                            <>
+                              <span className={classNames('block truncate', selected && 'text-white font-semibold')}>{filteredCity.name}, {filteredCity.region}, {filteredCity.country}</span>
+
+                              {selected && (
+                                <span
+                                  className={classNames(
+                                    'absolute inset-y-0 right-0 flex items-center pr-4',
+                                    active ? 'text-white' : 'text-blue-600'
+                                  )}
+                                >
+                                  {/* <RiSunLine className="h-5 w-5" aria-hidden="true" /> */}
+                                </span>
+                              )}
+                            </>
+                          )}
+                        </Combobox.Option>
+                      ))}
+                    </Combobox.Options>
+                  )}
+                </div>
+              </Combobox>
+              {/* </div> */}
             </div>
           </div>
 
           <div className="grid grid-cols-3 gap-4 mt-4">
             <div className="bg-gray-900 border border-gray-800 w-full col-span-3 md:col-span-1 rounded-md p-5 h-72">
-              <h1 className="text-gray-100 text-3xl font-medium text-center">{city}</h1>
+              <h1 className="text-gray-100 text-3xl font-medium text-center">{city.name}</h1>
 
               {/* Offsets temp position depending if its negative temp or positive. No need to offset if negative since the "-" char it makes the text look centered. Need to offset if positive temp to make it look centered*/}
               {weatherData.current.temp_c < 0 ? (
@@ -263,7 +264,7 @@ function App() {
               )}
 
               <span className="flex items-center text-gray-400 text-base mt-2 font-normal text-center justify-center">
-              H: {Math.round(weatherData.forecast.forecastday[0].day?.maxtemp_c)}° L: {Math.round(weatherData.forecast.forecastday[0].day?.mintemp_c)}°
+                H: {Math.round(weatherData.forecast.forecastday[0].day?.maxtemp_c)}° L: {Math.round(weatherData.forecast.forecastday[0].day?.mintemp_c)}°
               </span>
 
               <span className="flex items-center text-gray-100 text-xl mt-5 font-normal text-center justify-center">
@@ -328,7 +329,7 @@ function App() {
         <div className="mt-16 mx-auto max-w-5xl mb-16 p-4">
           <span className="text-gray-100 text-xl font-medium">3-Day Forecast</span>
 
-          <div className="grid grid-cols-3 gap-4 mt-2 mb-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-2 mb-4">
             {array.map((item) => (
               <div className="bg-gray-900 border border-gray-800 shadow-sm rounded-md p-4 hover:bg-gray-800 cursor-pointer">
 
@@ -342,7 +343,7 @@ function App() {
                 </div>
               </div>
             ))}
-          </div>   
+          </div>
 
           <div className="grid grid-cols-4 gap-4">
             <div className="space-y-1.5">
@@ -365,13 +366,7 @@ function App() {
           </div>
         </div>
 
-
       </section>
-
-
-      {/* <div className="bg-gray-800">
-        <p className="text-white font-bold">{Math.round(weatherData.current.temp_c)}</p>
-      </div> */}
 
       <footer className="bg-gray-900 bottom-0 absolute w-full">
         <div className="w-full mx-auto max-w-5xl p-4 flex justify-center">
