@@ -30,6 +30,10 @@ const weatherIcons = [
         icon: RiRainyLine,
     },
     {
+        weather: "Patchy rain nearby",
+        icon: RiRainyLine,
+    },
+    {
         weather: "Patchy snow possible",
         icon: RiSnowyLine,
     },
