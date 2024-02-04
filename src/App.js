@@ -185,15 +185,6 @@ function App() {
                 <span className="sr-only">Refresh</span>
                 <HiRefresh onClick={() => fetchWeatherData()} className={`w-5 h-5 text-gray-400 group-hover:text-gray-300 ${loading ? "animate-reverse-spin" : ""}`} />
               </button>
-              {/* <div className="inline-flex items-center bg-gray-800 py-2 px-4 rounded-full shadow-sm"> */}
-              {/* <HiSearch className="w-5 h-5 mr-2 text-gray-400" />
-                <label className="sr-only" htmlFor="citySearch">City Search</label>
-                <input
-                  id="citySearch"
-                  type="text"
-                  placeholder="Search for city"
-                  className="bg-gray-800 text-gray-100 inline-flex focus:ring-0 focus:ring-offset-0 outline-none"
-                /> */}
               <Combobox as="div" value={city} onChange={setCity}>
                 <div className="relative  items-center bg-gray-800 pt-2 pb-1 px-4 rounded-full shadow-sm">
                   <div className="relative items-center inline-flex">
@@ -204,7 +195,7 @@ function App() {
                       placeholder="Search for city"
                       className="bg-gray-800 text-gray-100 inline-flex focus:ring-0 focus:ring-offset-0 outline-none"
                       onChange={(event) => setQuery(event.target.value)} 
-                    // displayValue={(filteredCity) => filteredCity?.name}
+                      // displayValue={(filteredCity) => filteredCity?.name}
                     />
                   </div>
 
@@ -268,11 +259,7 @@ function App() {
               </span>
 
               <span className="flex items-center text-gray-100 text-xl mt-5 font-normal text-center justify-center">
-                {/* <FiSun className="w-6 h-6 text-blue-500 mr-2" /> */}
                 {getWeatherIcon(weatherData.current?.condition?.text)}
-                {/* {getWeatherIcon(weatherData?.current?.condition?.text)} */}
-                {/* <FiSun className="w-6 h-6 text-blue-500 mr-2" /> */}
-                {/* {getWeatherDescription(weatherData.current?.condition?.text)} */}
                 {weatherData.current?.condition?.text}
               </span>
 
