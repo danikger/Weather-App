@@ -1,13 +1,7 @@
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Area, AreaChart } from 'recharts';
-import React, { useEffect } from 'react';
+import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
 
 
 export default function WeatherGraph({ displayedGraphInfo, weatherData, detailedForecastDay }) {
-
-  useEffect(() => {
-    
-  }, [displayedGraphInfo]);
-  console.log(weatherData.forecast.forecastday[detailedForecastDay].hour)
   return (
     <>
       {displayedGraphInfo === "Temp" ? (

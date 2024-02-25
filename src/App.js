@@ -8,7 +8,6 @@ import WeatherGraph from './Components/weatherGraph';
 import './App.css';
 
 function App() {
-  // 
   const [city, setCity] = useState(() => {
     const savedCity = JSON.parse(window.localStorage.getItem('city'));
     return savedCity || { name: "Winnipeg", region: "Manitoba", country: "Canada" };
@@ -137,13 +136,12 @@ function App() {
       const response = await fetch(`https://api.weatherapi.com/v1/search.json?key=${process.env.REACT_APP_WEATHERKEY}&q=${query}`);
       if (response.ok) {
         const data = await response.json();
-        console.log(data);
         setCitiesSearch(data);
       } else {
         throw new Error('Unable to fetch weather data');
       }
     } catch (error) {
-      console.error(error);
+      // console.error(error);
     }
   }
 
@@ -157,9 +155,7 @@ function App() {
       setLoading(true);
 
       let cityName = `${city.name} ${city.country}`;
-      console.log(cityName);
 
-      // const response = await fetch(`https://api.weatherapi.com/v1/current.json?key=${process.env.REACT_APP_WEATHERKEY}&q=Winnipeg&days=7&aqi=no&alerts=no`);
       const response = await fetch(`https://api.weatherapi.com/v1/forecast.json?key=${process.env.REACT_APP_WEATHERKEY}&q=${cityName}&days=7&aqi=no&alerts=no`);
       if (response.ok) {
         const data = await response.json();
@@ -172,7 +168,7 @@ function App() {
         setLoading(false);
       }, 1000); // Set loading to false after 1 second
     } catch (error) {
-      console.error(error);
+      // console.error(error);
       setLoading(false);
     }
   };
@@ -287,7 +283,7 @@ function App() {
             <div className="bg-gray-900 border border-gray-800 w-full col-span-3 md:col-span-1 rounded-md p-5">
               <h1 className="text-gray-100 text-2xl font-medium text-center">{city.name}, {city.region}</h1>
 
-              {/* Offsets temp position depending if its negative temp or positive. No need to offset if negative since the "-" char it makes the text look centered. Need to offset if positive temp to make it look centered*/}
+              {/* Offsets temp element position depending if its negative temp or positive. No need to offset if negative since the "-" char it makes the text look centered. Need to offset if positive temp to make it look centered*/}
               {weatherData.current.temp_c < 0 ? (
                 <p className="mt-5 text-gray-100 text-8xl font-medium text-center">
                   {Math.round(weatherData.current.temp_c)}°
@@ -313,7 +309,7 @@ function App() {
             <div className="w-full col-span-3 md:col-span-2 grid md:grid-cols-3 grid-cols-2 gap-4">
 
               {weatherStats.map((item) => (
-                <div className="bg-gray-900 border border-gray-800 shadow-sm rounded-md p-5">
+                <div key={item.title} className="bg-gray-900 border border-gray-800 shadow-sm rounded-md p-5">
                   <div className="flex items-center mb-4">
                     <item.icon className="w-6 h-6 mr-2 text-blue-500" />
                     <p className="text-gray-400 text-base lg:text-lg font-medium break-all">{item.title}</p>
@@ -329,7 +325,7 @@ function App() {
           </div>
         </div>
 
-        {/* 7 DAY FORECAST STYLING - need either a new API or pay $7 a month for 7 day forecast :(*/}
+        {/* 7 DAY FORECAST STYLING - need either a new API or pay $7 a month for 7 day forecast :( */}
         {/* <div className="mt-12 mx-auto max-w-5xl mb-16">
           <span className="text-gray-100 text-xl font-medium">3-Day Forecast</span>
 
@@ -346,7 +342,6 @@ function App() {
                 <div className="flex justify-center mt-3">
                   <p className="text-gray-400 text-4xl">{item.temp}°</p>
                 </div>
-
               </div>
             ))}
           </div>
@@ -358,7 +353,7 @@ function App() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2 mb-4">
             {threeDayForecast.map((item, index) => (
-              <div onClick={() => setDetailedForecastDay(index)} className="bg-gray-900 border border-gray-800 shadow-sm rounded-md p-4 hover:bg-gray-800 cursor-pointer">
+              <button key={item.day} onClick={() => setDetailedForecastDay(index)} className="bg-gray-900 border border-gray-800 shadow-sm rounded-md p-4 hover:bg-gray-800 cursor-pointer">
 
                 <div className="flex items-center">
                   <div className="w-7 h-7 mr-2.5">
@@ -366,14 +361,13 @@ function App() {
                   </div>
                   <div>
                     <p className="text-gray-100 text-lg font-medium">{item.day}</p>
-                    {/* <p className="text-gray-400 text-sm -mt-1">{item.weather}</p> */}
                   </div>
                   <div className="flex ml-auto">
                     <p className="text-gray-100 text-lg mr-1">{item.maxTemp}°</p>
                     <p className="text-gray-400 text-lg">{item.lowTemp}°</p>
                   </div>
                 </div>
-              </div>
+              </button>
             ))}
           </div>
 
@@ -396,7 +390,7 @@ function App() {
               null
             )}
             {weatherData.forecast.forecastday[detailedForecastDay]?.hour?.slice(detailedForecastDay === 0 ? new Date().getHours() + 1 : 0).map((item, index) => (
-              <div className="h-full border border-gray-800 shadow-sm rounded-md py-4 px-5 flex flex-col items-center ">
+              <div key={item.time} className="h-full border border-gray-800 shadow-sm rounded-md py-4 px-5 flex flex-col items-center ">
                 <span className="text-gray-400 font-medium text-center"> {new Date(item.time).getHours() % 12 || 12} {new Date(item.time).getHours() >= 12 ? "PM" : "AM"} </span>
                 {/* <FiWind className="w-9 h-9 text-blue-500 mt-4 mb-4" /> */}
                 <div className="w-9 h-9 mt-3 mb-3">
