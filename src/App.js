@@ -8,7 +8,11 @@ import WeatherGraph from './Components/weatherGraph';
 import './App.css';
 
 function App() {
-  const [city, setCity] = useState({ name: 'Winnipeg', region: "Manitoba" });
+  // 
+  const [city, setCity] = useState(() => {
+    const savedCity = JSON.parse(window.localStorage.getItem('city'));
+    return savedCity || { name: "Winnipeg", region: "Manitoba", country: "Canada" };
+  });
   const [loading, setLoading] = useState(false);
   const [weatherData, setWeatherData] = useState({
     current: "",
@@ -95,6 +99,8 @@ function App() {
 
   useEffect(() => {
     fetchWeatherData();
+
+    window.localStorage.setItem('city', JSON.stringify(city));
   }, [city]);
 
 
