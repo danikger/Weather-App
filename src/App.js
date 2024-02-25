@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react';
 import { HiSearch, HiRefresh } from "react-icons/hi";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Area, AreaChart } from 'recharts';
-import { FiWind, FiDroplet, FiThermometer, FiEye, FiSun } from "react-icons/fi";
+import { FiWind, FiDroplet, FiThermometer, FiEye } from "react-icons/fi";
 import { RiWaterPercentLine, RiDashboard3Line } from "react-icons/ri";
 import { Combobox } from '@headlessui/react'
 import weatherIcons from './JSON/weatherIcons';
+import WeatherGraph from './Components/weatherGraph';
 import './App.css';
 
 function App() {
-  const [city, setCity] = useState({ name: 'Winnipeg' });
+  const [city, setCity] = useState({ name: 'Winnipeg', region: "Manitoba" });
   const [loading, setLoading] = useState(false);
   const [weatherData, setWeatherData] = useState({
     current: "",
@@ -18,22 +18,38 @@ function App() {
   const [query, setQuery] = useState('')
   const [citiesSearch, setCitiesSearch] = useState([]);
 
+  const [displayedGraphInfo, setDisplayedGraphInfo] = useState("Temp");
+  const [detailedForecastDay, setDetailedForecastDay] = useState(0);
+
+  let days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
   let threeDayForecast = [
     {
       day: 'Today',
+      date: new Date(weatherData.forecast.forecastday[0]?.date),
+      weather: weatherData.forecast.forecastday[0]?.day?.condition?.text,
       maxTemp: Math.round(weatherData.forecast.forecastday[0]?.day?.maxtemp_c),
       lowTemp: Math.round(weatherData.forecast.forecastday[0]?.day?.mintemp_c),
     },
     {
-      day: new Date(weatherData.forecast.forecastday[1]?.date_epoch * 1000).toLocaleTimeString('en-us', { weekday: "long" }).split(' ')[0],
+      day: days[new Date(weatherData.forecast.forecastday[1]?.date_epoch * 1000).getDay()],
+      date: new Date(weatherData.forecast.forecastday[1]?.date),
+      weather: weatherData.forecast.forecastday[1]?.day?.condition?.text,
       maxTemp: Math.round(weatherData.forecast.forecastday[1]?.day?.maxtemp_c),
       lowTemp: Math.round(weatherData.forecast.forecastday[1]?.day?.mintemp_c),
     },
     {
-      day: new Date(weatherData.forecast.forecastday[2]?.date_epoch * 1000).toLocaleTimeString('en-us', { weekday: "long" }).split(' ')[0],
+      day: days[new Date(weatherData.forecast.forecastday[2]?.date_epoch * 1000).getDay()],
+      date: new Date(weatherData.forecast.forecastday[2]?.date),
+      weather: weatherData.forecast.forecastday[2]?.day?.condition?.text,
       maxTemp: Math.round(weatherData.forecast.forecastday[2]?.day?.maxtemp_c),
       lowTemp: Math.round(weatherData.forecast.forecastday[2]?.day?.mintemp_c),
     },
+  ];
+
+  const graphSideNav = [
+    { id: "Temp", icon: FiThermometer, text: "Temperature" },
+    { id: "Prec", icon: FiDroplet, text: "Precipitation" },
   ];
 
 
@@ -102,7 +118,7 @@ function App() {
   function getWeatherIcon(weather) {
     if (weather) {
       let item = weatherIcons.find((item) => item.weather.toLowerCase() === weather.toLowerCase().trim()); // Trim and lowercase to make sure it matches. API sometimes messes it up (Ex. "partly Cloudy " instead of "Partly cloudy")
-      return item ? <item.icon className="w-7 h-7 text-blue-500 mr-2" /> : null;
+      return item ? <item.icon className="w-full h-full text-blue-500" /> : null;
     }
   }
 
@@ -134,7 +150,8 @@ function App() {
       // Used for loading animation
       setLoading(true);
 
-      let cityName = city.name;
+      let cityName = `${city.name} ${city.country}`;
+      console.log(cityName);
 
       // const response = await fetch(`https://api.weatherapi.com/v1/current.json?key=${process.env.REACT_APP_WEATHERKEY}&q=Winnipeg&days=7&aqi=no&alerts=no`);
       const response = await fetch(`https://api.weatherapi.com/v1/forecast.json?key=${process.env.REACT_APP_WEATHERKEY}&q=${cityName}&days=7&aqi=no&alerts=no`);
@@ -169,8 +186,8 @@ function App() {
   const filteredCities =
     query === ''
       ? citiesSearch
-      : citiesSearch.filter((person) => {
-        return person.name.toLowerCase().includes(query.toLowerCase())
+      : citiesSearch.filter((city) => {
+        return city.name.toLowerCase().includes(query.toLowerCase())
       })
 
 
@@ -261,8 +278,8 @@ function App() {
           </div>
 
           <div className="grid grid-cols-3 gap-4 mt-4">
-            <div className="bg-gray-900 border border-gray-800 w-full col-span-3 md:col-span-1 rounded-md p-5 h-72">
-              <h1 className="text-gray-100 text-3xl font-medium text-center">{city.name}</h1>
+            <div className="bg-gray-900 border border-gray-800 w-full col-span-3 md:col-span-1 rounded-md p-5">
+              <h1 className="text-gray-100 text-2xl font-medium text-center">{city.name}, {city.region}</h1>
 
               {/* Offsets temp position depending if its negative temp or positive. No need to offset if negative since the "-" char it makes the text look centered. Need to offset if positive temp to make it look centered*/}
               {weatherData.current.temp_c < 0 ? (
@@ -280,7 +297,9 @@ function App() {
               </span>
 
               <span className="flex items-center text-gray-100 text-xl mt-5 font-normal text-center justify-center">
-                {getWeatherIcon(weatherData.current?.condition?.text)}
+                <div className="w-7 h-7 mr-2.5">
+                  {getWeatherIcon(weatherData.current?.condition?.text)}
+                </div>
                 {weatherData.current?.condition?.text}
               </span>
 
@@ -289,7 +308,6 @@ function App() {
 
               {weatherStats.map((item) => (
                 <div className="bg-gray-900 border border-gray-800 shadow-sm rounded-md p-5">
-
                   <div className="flex items-center mb-4">
                     <item.icon className="w-6 h-6 mr-2 text-blue-500" />
                     <p className="text-gray-400 text-base lg:text-lg font-medium break-all">{item.title}</p>
@@ -298,17 +316,12 @@ function App() {
                     <p className="text-gray-100 text-4xl">{item.stat}</p>
                     <p className="text-gray-100 text-xl ml-1">{item.unit}</p>
                   </div>
-
                 </div>
               ))}
 
             </div>
           </div>
         </div>
-
-
-        {/* This section makes it feel like theres too many gray squares/rectangles on the page. 
-        Perhaps go with something with no background?  */}
 
         {/* 7 DAY FORECAST STYLING - need either a new API or pay $7 a month for 7 day forecast :(*/}
         {/* <div className="mt-12 mx-auto max-w-5xl mb-16">
@@ -334,16 +347,21 @@ function App() {
         </div> */}
 
         {/* 3 DAY FORECAST */}
-        <div className="mt-16 mx-auto max-w-5xl mb-16 p-4">
+        <div className="mt-6 sm:mt-16 mx-auto max-w-5xl mb-24 p-4">
           <span className="text-gray-100 text-xl font-medium">3-Day Forecast</span>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-2 mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2 mb-4">
             {threeDayForecast.map((item, index) => (
-              <div className="bg-gray-900 border border-gray-800 shadow-sm rounded-md p-4 hover:bg-gray-800 cursor-pointer">
+              <div onClick={() => setDetailedForecastDay(index)} className="bg-gray-900 border border-gray-800 shadow-sm rounded-md p-4 hover:bg-gray-800 cursor-pointer">
 
                 <div className="flex items-center">
-                  {getWeatherIcon(weatherData.forecast?.forecastday[index]?.day?.condition?.text)}
-                  <p className="text-gray-100 text-lg font-medium">{item.day}</p>
+                  <div className="w-7 h-7 mr-2.5">
+                    {getWeatherIcon(item.weather)}
+                  </div>
+                  <div>
+                    <p className="text-gray-100 text-lg font-medium">{item.day}</p>
+                    {/* <p className="text-gray-400 text-sm -mt-1">{item.weather}</p> */}
+                  </div>
                   <div className="flex ml-auto">
                     <p className="text-gray-100 text-lg mr-1">{item.maxTemp}°</p>
                     <p className="text-gray-400 text-lg">{item.lowTemp}°</p>
@@ -353,24 +371,61 @@ function App() {
             ))}
           </div>
 
-          <div className="grid grid-cols-4 gap-4">
-            <div className="space-y-1.5">
-              <button className="flex items-center bg-gray-900 rounded-md p-2.5 w-full">
-                <FiThermometer className="w-6 h-6 text-blue-500 mr-2.5" />
-                <p className="text-gray-100 font-medium">Temperature</p>
-              </button>
 
-              <button className="flex items-center hover:bg-gray-900 rounded-md p-2.5 w-full group">
-                <FiDroplet className="w-6 h-6 text-gray-600 mr-2.5 group-hover:text-blue-500" />
-                <p className="text-gray-400 font-medium group-hover:text-gray-100">Precipitation</p>
-              </button>
+          {/* FORECAST CAROUSEL */}
+          <span className="md:hidden text-gray-100 text-xl font-medium">
+            {/* All this extra date manipulation is to offset the timezone. Ex. "2024-02-21" shows up as "2024-02-20" without the offsetting. This should make it show up as the correct date. */}
+            {threeDayForecast[detailedForecastDay].day + ", " + new Date(threeDayForecast[detailedForecastDay].date.getTime() - threeDayForecast[detailedForecastDay].date.getTimezoneOffset() * -60000).toLocaleDateString('en-us', { month: 'long', day: 'numeric' })}
+          </span>
+          <div className="md:hidden flex gap-x-3 whitespace-nowrap overflow-x-auto mt-2">
+            {detailedForecastDay === 0 ? (
+              <div className="h-full border border-gray-800 shadow-sm rounded-md py-4 px-5 flex flex-col items-center">
+                <span className="text-gray-200 font-medium"> Now </span>
+                <div className="w-9 h-9 mt-3 mb-3">
+                  {getWeatherIcon(weatherData.forecast.forecastday[detailedForecastDay]?.hour?.slice(new Date().getHours())[0].condition.text)}
+                </div>
+                <span className="text-gray-100 text-lg"> {Math.round(weatherData.forecast.forecastday[detailedForecastDay]?.hour?.slice(new Date().getHours())[0].temp_c)}° </span>
+              </div>
+            ) : (
+              null
+            )}
+            {weatherData.forecast.forecastday[detailedForecastDay]?.hour?.slice(detailedForecastDay === 0 ? new Date().getHours() + 1 : 0).map((item, index) => (
+              <div className="h-full border border-gray-800 shadow-sm rounded-md py-4 px-5 flex flex-col items-center ">
+                <span className="text-gray-400 font-medium text-center"> {new Date(item.time).getHours() % 12 || 12} {new Date(item.time).getHours() >= 12 ? "PM" : "AM"} </span>
+                {/* <FiWind className="w-9 h-9 text-blue-500 mt-4 mb-4" /> */}
+                <div className="w-9 h-9 mt-3 mb-3">
+                  {getWeatherIcon(item.condition.text)}
+                </div>
+                <span className="text-gray-100 text-lg "> {Math.round(item.temp_c)}° </span>
+              </div>
+            ))}
+          </div>
+
+
+          {/* WEATHER GRAPH */}
+          <div className="md:grid grid-cols-4 gap-4 hidden">
+            <div className="col-span-1 space-y-1.5">
+              {graphSideNav.map((button) => (
+                <button
+                  key={button.id}
+                  onClick={() => setDisplayedGraphInfo(button.id)}
+                  className={`flex items-center rounded-md p-2.5 w-full group ${displayedGraphInfo === button.id ? "bg-gray-900" : "hover:bg-gray-900"}`}
+                >
+                  <button.icon className={`w-6 h-6 mr-2.5 ${displayedGraphInfo === button.id ? "text-blue-500" : "text-gray-600 group-hover:text-blue-500"}`} />
+                  <p className={`${displayedGraphInfo === button.id ? "text-gray-100 font-medium" : "text-gray-400 group-hover:text-gray-100"}`}>
+                    {button.text}
+                  </p>
+                </button>
+              ))}
             </div>
 
-            <div className="border border-gray-800 shadow-sm rounded-md p-4 col-span-3 h-80">
-
+            <div className="col-span-3 border border-gray-800 shadow-sm rounded-md p-5 pb-10 h-80">
+              <span className="text-gray-100 text-xl font-medium mb-0">
+                {/* All this extra date manipulation is to offset the timezone. Ex. "2024-02-21" shows up as "2024-02-20" without the offsetting. This should make it show up as the correct date. */}
+                {threeDayForecast[detailedForecastDay].day + ", " + new Date(threeDayForecast[detailedForecastDay].date.getTime() - threeDayForecast[detailedForecastDay].date.getTimezoneOffset() * -60000).toLocaleDateString('en-us', { month: 'long', day: 'numeric' })}
+              </span>
+              <WeatherGraph displayedGraphInfo={displayedGraphInfo} weatherData={weatherData} detailedForecastDay={detailedForecastDay} />
             </div>
-
-
           </div>
         </div>
 
