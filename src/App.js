@@ -26,6 +26,7 @@ function App() {
 
   let days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
+  
   let threeDayForecast = [
     {
       day: 'Today',
@@ -49,6 +50,7 @@ function App() {
       lowTemp: Math.round(weatherData.forecast.forecastday[2]?.day?.mintemp_c),
     },
   ];
+
 
   const graphSideNav = [
     { id: "Temp", icon: FiThermometer, text: "Temperature" },
@@ -174,16 +176,6 @@ function App() {
   };
 
 
-  /**
-   * Used to combine classNames together.
-   * @param  {...any} classes Classes to be combined together.
-   * @returns {String} Returns a string of classNames combined together.
-   */
-  function classNames(...classes) {
-    return classes.filter(Boolean).join(' ')
-  }
-
-
   // Filter cities based on the query.
   const filteredCities =
     query === ''
@@ -246,23 +238,15 @@ function App() {
                         <Combobox.Option
                           key={filteredCity.id}
                           value={filteredCity}
-                          className={({ active }) =>
-                            classNames(
-                              'relative cursor-pointer select-none py-2 pl-3 pr-9',
-                              active ? 'bg-blue-600 text-white' : 'text-gray-400'
-                            )
-                          }
+                          className={({active}) => `relative cursor-pointer select-none py-2 pl-3 pr-9 ${active ? 'bg-blue-600 text-white' : 'text-gray-400'}`}
                         >
                           {({ active, selected }) => (
                             <>
-                              <span className={classNames('block truncate', selected && 'text-white font-semibold')}>{filteredCity.name}, {filteredCity.region}, {filteredCity.country}</span>
+                              <span className={`block truncate ${selected ? 'text-white font-semibold' : ''}`}>{filteredCity.name}, {filteredCity.region}, {filteredCity.country}</span>
 
                               {selected && (
                                 <span
-                                  className={classNames(
-                                    'absolute inset-y-0 right-0 flex items-center pr-4',
-                                    active ? 'text-white' : 'text-blue-600'
-                                  )}
+                                  className={`absolute inset-y-0 right-0 flex items-center pr-4 ${active ? 'text-white': 'text-blue-600'}`}
                                 >
                                   {/* <RiSunLine className="h-5 w-5" aria-hidden="true" /> */}
                                 </span>
