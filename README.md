@@ -1,4 +1,7 @@
 # Weather Forecast Dashboard
+This project is a weather forecast dashboard that provides real-time weather updates for any location. It uses the WeatherAPI to fetch weather data and displays it in a user-friendly dashboard.
+
+Can be viewed here: [http://daniil-weather-forecast.s3-website-us-east-1.amazonaws.com/]
 
 ## Getting Started
 
