@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
-import { HiSearch, HiRefresh } from "react-icons/hi";
+import { HiRefresh } from "react-icons/hi";
 import { FiWind, FiDroplet, FiThermometer, FiEye } from "react-icons/fi";
 import { RiWaterPercentLine, RiDashboard3Line } from "react-icons/ri";
-import { Combobox } from '@headlessui/react'
 import weatherIcons from './JSON/weatherIcons';
 import WeatherGraph from './Components/weatherGraph';
+import CitiesSearchbar from './Components/citiesSearchbar';
 import './App.css';
 
 function App() {
@@ -17,9 +17,6 @@ function App() {
     current: "",
     forecast: { forecastday: [""] },
   });
-
-  const [query, setQuery] = useState('')
-  const [citiesSearch, setCitiesSearch] = useState([]);
 
   const [displayedGraphInfo, setDisplayedGraphInfo] = useState("Temp");
   const [detailedForecastDay, setDetailedForecastDay] = useState(0);
@@ -105,17 +102,6 @@ function App() {
   }, [city]);
 
 
-  // Used for the search bar to fetch cities based on the query from search bar.
-  useEffect(() => {
-    // debounce to prevent spamming API
-    const getData = setTimeout(() => {
-      searchCities();
-    }, 200)
-
-    return () => clearTimeout(getData)
-  }, [query]);
-
-
   /**
    * Provides the corresponding icon for the weather condition.
    * 
@@ -126,24 +112,6 @@ function App() {
     if (weather) {
       let item = weatherIcons.find((item) => item.weather.toLowerCase() === weather.toLowerCase().trim()); // Trim and lowercase to make sure it matches. API sometimes messes it up (Ex. "partly Cloudy " instead of "Partly cloudy")
       return item ? <item.icon className="w-full h-full text-blue-500" /> : null;
-    }
-  }
-
-
-  /**
-   * Searches for cities based on the query and sets the 'citiesSearch' state with the results.
-   */
-  async function searchCities() {
-    try {
-      const response = await fetch(`https://api.weatherapi.com/v1/search.json?key=${process.env.REACT_APP_WEATHERKEY}&q=${query}`);
-      if (response.ok) {
-        const data = await response.json();
-        setCitiesSearch(data);
-      } else {
-        throw new Error('Unable to fetch weather data');
-      }
-    } catch (error) {
-      // console.error(error);
     }
   }
 
@@ -174,15 +142,6 @@ function App() {
       setLoading(false);
     }
   };
-
-
-  // Filter cities based on the query.
-  const filteredCities =
-    query === ''
-      ? citiesSearch
-      : citiesSearch.filter((city) => {
-        return city.name.toLowerCase().includes(query.toLowerCase())
-      })
 
 
   return (
@@ -217,49 +176,7 @@ function App() {
                 <span className="sr-only">Refresh</span>
                 <HiRefresh onClick={() => fetchWeatherData()} className={`w-5 h-5 text-gray-400 group-hover:text-gray-300 ${loading ? "animate-reverse-spin" : ""}`} />
               </button>
-              <Combobox as="div" value={city} onChange={setCity}>
-                <div className="relative  items-center bg-gray-800 pt-2 pb-1 px-4 rounded-full shadow-sm">
-                  <div className="relative items-center inline-flex">
-
-                    <HiSearch className="w-5 h-5 mr-2 text-gray-400" />
-                    <Combobox.Label className="sr-only">City Search</Combobox.Label>
-                    <Combobox.Input
-                      placeholder="Search for city"
-                      className="bg-gray-800 text-gray-100 inline-flex focus:ring-0 focus:ring-offset-0 outline-none"
-                      onChange={(event) => setQuery(event.target.value)}
-                    // displayValue={(filteredCity) => filteredCity?.name}
-                    />
-                  </div>
-
-
-                  {filteredCities.length > 0 && (
-                    <Combobox.Options className="absolute z-10 mt-1.5 max-h-60 w-full overflow-auto rounded-md bg-gray-800 py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
-                      {filteredCities.map((filteredCity) => (
-                        <Combobox.Option
-                          key={filteredCity.id}
-                          value={filteredCity}
-                          className={({active}) => `relative cursor-pointer select-none py-2 pl-3 pr-9 ${active ? 'bg-blue-600 text-white' : 'text-gray-400'}`}
-                        >
-                          {({ active, selected }) => (
-                            <>
-                              <span className={`block truncate ${selected ? 'text-white font-semibold' : ''}`}>{filteredCity.name}, {filteredCity.region}, {filteredCity.country}</span>
-
-                              {selected && (
-                                <span
-                                  className={`absolute inset-y-0 right-0 flex items-center pr-4 ${active ? 'text-white': 'text-blue-600'}`}
-                                >
-                                  {/* <RiSunLine className="h-5 w-5" aria-hidden="true" /> */}
-                                </span>
-                              )}
-                            </>
-                          )}
-                        </Combobox.Option>
-                      ))}
-                    </Combobox.Options>
-                  )}
-                </div>
-              </Combobox>
-              {/* </div> */}
+              <CitiesSearchbar city={city} setCity={setCity}/>
             </div>
           </div>
 
